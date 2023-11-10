@@ -6,7 +6,7 @@
 [![tests](https://github.com/zoccoler/nap-plot-tools/workflows/tests/badge.svg)](https://github.com/zoccoler/nap-plot-tools/actions)
 [![codecov](https://codecov.io/gh/zoccoler/nap-plot-tools/branch/main/graph/badge.svg)](https://codecov.io/gh/zoccoler/nap-plot-tools)
 
-A NAPari PLOTter TOOLbar for additional functionalitites. Based on PyQt.
+A NAPari PLOTter TOOLbar and tools for additional functionalities. Based on PyQt.
 
 [Jump to Intallation](#installation)
 
