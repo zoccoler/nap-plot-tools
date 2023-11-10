@@ -1,4 +1,4 @@
-from .npt_cmap import get_custom_cat10based_cmap_list
+from nap_plot_tools.cmap import get_custom_cat10based_cmap_list
 from qtpy.QtCore import Qt, QSize, QRect
 from qtpy.QtGui import QColor, QPainter, QPixmap
 from qtpy.QtWidgets import QSpinBox, QToolButton, QToolBar, QVBoxLayout, QWidget, QHBoxLayout, QSizePolicy
