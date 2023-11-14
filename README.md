@@ -14,7 +14,7 @@ A NAPari PLOTter TOOLbar and tools for additional functionalities. Based on PyQt
 
 ## Usage
 
-
+Please check the [example notebook](https://github.com/zoccoler/nap-plot-tools/blob/main/src/nap_plot_tools/notebooks/Example.ipynb).
 
 ## Installation
 
