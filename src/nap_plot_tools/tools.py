@@ -250,7 +250,12 @@ class CustomToolbarWidget(QWidget):
             If True, button is checkable, by default False
         checked_icon_path : str, optional
             Path to the icon when the button is checked. If None, the default icon is used, by default None.
-        """        
+        """
+        if not isinstance(default_icon_path, str):
+            default_icon_path = str(default_icon_path)
+        if checked_icon_path is not None and not isinstance(checked_icon_path, str):
+            checked_icon_path = str(checked_icon_path)
+        
         button = CustomToolButton(default_icon_path, checked_icon_path)
         button.setIconSize(self._icon_size)
         button.setText(name)
