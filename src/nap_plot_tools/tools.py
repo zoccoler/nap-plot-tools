@@ -8,7 +8,7 @@ import numpy as np
 class QtColorBox(QWidget):
     """A widget that shows a square with the current signal class color.
     """
-    cmap = get_custom_cat10based_cmap_list()
+    
 
     def __init__(self) -> None:
         super().__init__()
@@ -21,6 +21,7 @@ class QtColorBox(QWidget):
         # self.setToolTip(('Selected signal class color'))
         self._value = 0
         self.color = None
+        self.cmap = get_custom_cat10based_cmap_list()
 
     def paintEvent(self, event):
         """Paint the colorbox.  If no color, display a checkerboard pattern.
@@ -79,6 +80,9 @@ class QtColorSpinBox(QWidget):
 
         self.layout.addWidget(self.colorBox)
         self.layout.addWidget(self.spinBox)
+
+        # Connect spinbox to color
+        self.spinBox.valueChanged.connect(self.colorBox.setValue)
 
     @property
     def value(self):
@@ -148,6 +152,7 @@ class CustomToolButton(QToolButton):
         self._default_icon_path = default_icon_path
         self._checked_icon_path = checked_icon_path or default_icon_path
         self.setCheckable(checked_icon_path is not None)
+        self.is_connected = False
         # Set margins and padding to 0 to avoid extra space around the icon
         self.setStyleSheet("QToolButton { margin: 0px; padding: 0px; }")
         # Set fixed size based on icon size
@@ -233,7 +238,7 @@ class CustomToolbarWidget(QWidget):
         # Dictionary to store buttons
         self.buttons = {}
 
-    def add_custom_button(self, name, tooltip, default_icon_path, callback, checkable=False, checked_icon_path=None):
+    def add_custom_button(self, name, default_icon_path, tooltip='', callback=None, checkable=False, checked_icon_path=None):
         """Add custom button to toolbar.
 
         Parameters
@@ -251,29 +256,57 @@ class CustomToolbarWidget(QWidget):
         checked_icon_path : str, optional
             Path to the icon when the button is checked. If None, the default icon is used, by default None.
         """
+        # Convert paths to strings
         if not isinstance(default_icon_path, str):
             default_icon_path = str(default_icon_path)
         if checked_icon_path is not None and not isinstance(checked_icon_path, str):
             checked_icon_path = str(checked_icon_path)
-        
+        # Creates custom toolbutton
         button = CustomToolButton(default_icon_path, checked_icon_path)
         button.setIconSize(self._icon_size)
         button.setText(name)
         button.setToolTip(tooltip)
-
-        if checkable:
-            button.setCheckable(True)
-            button.toggled.connect(callback)
-        else:
-            button.clicked.connect(lambda: callback())
-
+        # Add button to toolbar
         self.toolbar.addWidget(button)
         # Store button in dictionary
         self.buttons[name] = button
+        # Connect button callback
+        self.connect_button_callback(name, callback)
         # Adjust toolbar dimensions after adding the button
         self.update_toolbar_minimum_width()
         self.update_toolbar_height()
 
+    def connect_button_callback(self, name, callback):
+        """Sets or updates the callback for a specific button.
+
+        Parameters:
+        name: str
+            The name of the button.
+        callback: function
+            The new callback function to set.
+        """
+        if name in self.buttons:
+            button = self.buttons[name]
+            checkable = button.isCheckable()
+
+            # Safely disconnect existing connections
+            try:
+                if checkable:
+                    button.toggled.disconnect()
+                else:
+                    button.clicked.disconnect()
+            except TypeError:
+                # No connections to disconnect
+                pass
+
+            # Connect the new callback
+            if callback:
+                if checkable:
+                    button.toggled.connect(callback)
+                else:
+                    button.clicked.connect(lambda: callback())
+
+    
     def update_toolbar_minimum_width(self):
         total_width = 0
         for name, button in self.buttons.items():
