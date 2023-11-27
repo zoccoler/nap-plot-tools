@@ -114,6 +114,23 @@ class QtColorSpinBox(QWidget):
         self.spinBox.setValue(value)
         # updates color in colorbox
         self.colorBox.setValue(value)
+    
+    def get_color(self, norm=True):
+        """Get the color of the colorbox.
+
+        Parameters
+        ----------
+        norm : bool, optional
+            If True, color is normalized to [0, 1], by default True.
+
+        Returns
+        -------
+        tuple
+            Color tuple.
+        """
+        if norm:
+            return tuple([c / 255 for c in self.colorBox.color])     
+        return self.colorBox.color
 
     def connect(self, callback):
         self.spinBox.valueChanged.connect(callback)
