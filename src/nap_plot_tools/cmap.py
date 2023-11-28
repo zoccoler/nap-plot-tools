@@ -1,6 +1,49 @@
+from deprecated import deprecated
+
+def make_cat10_mod_cmap(first_color_transparent=True):
+    """Make a modified version of the cat10 colormap.
+
+    Parameters
+    ----------
+    first_color_transparent : bool, optional
+        Whether to make the first color transparent. The default is True.
+
+    Returns
+    -------
+    matplotlib.colors.ListedColormap
+        Matplotlib colormap.
+    """
+    return make_cmap_from_list(get_cat10_mod_hex_colors(), first_color_transparent)
+
+def make_cmap_from_list(colors, first_transparent=True):
+    """Make a matplotlib colormap from a list of colors.
+
+    Parameters
+    ----------
+    colors : list
+        List of colors in hex or rgb format.
+    first_transparent : bool, optional
+        Whether to make the first color transparent. The default is True.
+
+    Returns
+    -------
+    matplotlib.colors.ListedColormap
+        Matplotlib colormap.
+    """    
+    from cmap import Colormap, Color
+    if first_transparent:
+        first_color_as_list = list(Color(colors[0]))
+        # Set transparency to 0
+        first_color_as_list[-1] = 0
+        colors[0] = tuple(first_color_as_list)
+    return Colormap(colors).to_mpl()
+
+@deprecated("get_custom_cat10based_cmap_list() is deprecated. Use make_cat10_mod_cmap() instead (turn into list if needed).")
 def get_custom_cat10based_cmap_list():
     from cmap import Colormap
-    cat10_cmap = Colormap(get_nice_colormap()).lut()
+    import warnings
+    warnings.warn("get_custom_cat10based_cmap_list() is deprecated. Use make_cat10_mod_cmap() instead (turn into list if needed).", DeprecationWarning)
+    cat10_cmap = Colormap(get_cat10_mod_hex_colors()).lut()[1:]
     cat10_cmap_list = []
     for i in range(cat10_cmap.shape[0]):
         if i == 0:
@@ -13,13 +56,14 @@ def get_custom_cat10based_cmap_list():
             cat10_cmap_list.append(tuple(cat10_cmap[i - 1]))
     return cat10_cmap_list
 
-def get_nice_colormap():
-    colours_w_old_colors = [
+def get_cat10_mod_hex_colors():
+    colors_hex = [
+        "#e6e6fa",  # Insert "Lavender" as first color (for background)
         "#ff7f0e",
         "#1f77b4",
         "#2ca02c",
-        "#d62728",
-        "#9467bd",
+        "#9400d3", # Replace Red "#d62728" by Dark Violet
+        "#afeeee", # Replace Soft Pink "#9467bd" by Paleturquoise
         "#8c564b",
         "#e377c2",
         "#7f7f7f",
@@ -272,4 +316,4 @@ def get_nice_colormap():
         "#bcbcbc",
     ]
 
-    return colours_w_old_colors
+    return colors_hex
