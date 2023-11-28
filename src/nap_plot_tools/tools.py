@@ -1,4 +1,4 @@
-from nap_plot_tools.cmap import get_custom_cat10based_cmap_list
+from nap_plot_tools.cmap import make_cat10_mod_cmap, get_custom_cat10based_cmap_list
 from qtpy.QtCore import Qt, QSize, QRect
 from qtpy.QtGui import QColor, QPainter, QPixmap
 from qtpy.QtWidgets import QSpinBox, QToolButton, QToolBar, QVBoxLayout, QWidget, QHBoxLayout, QSizePolicy
@@ -8,9 +8,9 @@ import numpy as np
 class QtColorBox(QWidget):
     """A widget that shows a square with the current signal class color.
     """
-    cmap = get_custom_cat10based_cmap_list()
+    
 
-    def __init__(self) -> None:
+    def __init__(self, first_color_transparent=True) -> None:
         super().__init__()
         # TODO: Check why this may be necessary
         # self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
@@ -18,9 +18,10 @@ class QtColorBox(QWidget):
         self._height = 24
         self.setFixedWidth(self._height)
         self.setFixedHeight(self._height)
-        # self.setToolTip(('Selected signal class color'))
+        self.cmap = make_cat10_mod_cmap(first_color_transparent=first_color_transparent)
         self._value = 0
-        self.color = None
+        self.color = np.round(
+                255 * np.asarray(self.cmap(0))).astype(int)
 
     def paintEvent(self, event):
         """Paint the colorbox.  If no color, display a checkerboard pattern.
@@ -31,9 +32,9 @@ class QtColorBox(QWidget):
             Event from the Qt context.
         """
         painter = QPainter(self)
-        # signal_class = self.parent()._signal_class
         if self._value <= 0:
-            self.color = None
+            self.color = np.round(
+                255 * np.asarray(self.cmap(0))).astype(int)
             for i in range(self._height // 4):
                 for j in range(self._height // 4):
                     if (i % 2 == 0 and j % 2 == 0) or (
@@ -47,7 +48,7 @@ class QtColorBox(QWidget):
                     painter.drawRect(i * 4, j * 4, 5, 5)
         else:
             color = np.round(
-                255 * np.asarray(self.cmap[self._value])).astype(int)
+                255 * np.asarray(self.cmap(self._value))).astype(int)
             painter.setPen(QColor(*list(color)))
             painter.setBrush(QColor(*list(color)))
             painter.drawRect(0, 0, self._height, self._height)
@@ -66,11 +67,11 @@ class QtColorSpinBox(QWidget):
 
     Custom widget to select a color and a value.
     """    
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, first_color_transparent=True):
         super().__init__(parent)
         self.layout = QHBoxLayout(self)
         # Colorbox
-        self.colorBox = QtColorBox()
+        self.colorBox = QtColorBox(first_color_transparent=first_color_transparent)
         # Spinbox
         self.spinBox = QSpinBox()
         self.spinBox.setMinimum(0)
@@ -79,6 +80,9 @@ class QtColorSpinBox(QWidget):
 
         self.layout.addWidget(self.colorBox)
         self.layout.addWidget(self.spinBox)
+
+        # Connect spinbox to color
+        self.spinBox.valueChanged.connect(self.colorBox.setValue)
 
     @property
     def value(self):
@@ -110,6 +114,23 @@ class QtColorSpinBox(QWidget):
         self.spinBox.setValue(value)
         # updates color in colorbox
         self.colorBox.setValue(value)
+    
+    def get_color(self, norm=True):
+        """Get the color of the colorbox.
+
+        Parameters
+        ----------
+        norm : bool, optional
+            If True, color is normalized to [0, 1], by default True.
+
+        Returns
+        -------
+        tuple
+            Color tuple.
+        """
+        if norm:
+            return tuple([c / 255 for c in self.colorBox.color])     
+        return self.colorBox.color
 
     def connect(self, callback):
         self.spinBox.valueChanged.connect(callback)
@@ -148,6 +169,7 @@ class CustomToolButton(QToolButton):
         self._default_icon_path = default_icon_path
         self._checked_icon_path = checked_icon_path or default_icon_path
         self.setCheckable(checked_icon_path is not None)
+        self.is_connected = False
         # Set margins and padding to 0 to avoid extra space around the icon
         self.setStyleSheet("QToolButton { margin: 0px; padding: 0px; }")
         # Set fixed size based on icon size
@@ -233,7 +255,7 @@ class CustomToolbarWidget(QWidget):
         # Dictionary to store buttons
         self.buttons = {}
 
-    def add_custom_button(self, name, tooltip, default_icon_path, callback, checkable=False, checked_icon_path=None):
+    def add_custom_button(self, name, default_icon_path, tooltip='', callback=None, checkable=False, checked_icon_path=None):
         """Add custom button to toolbar.
 
         Parameters
@@ -251,29 +273,57 @@ class CustomToolbarWidget(QWidget):
         checked_icon_path : str, optional
             Path to the icon when the button is checked. If None, the default icon is used, by default None.
         """
+        # Convert paths to strings
         if not isinstance(default_icon_path, str):
             default_icon_path = str(default_icon_path)
         if checked_icon_path is not None and not isinstance(checked_icon_path, str):
             checked_icon_path = str(checked_icon_path)
-        
+        # Creates custom toolbutton
         button = CustomToolButton(default_icon_path, checked_icon_path)
         button.setIconSize(self._icon_size)
         button.setText(name)
         button.setToolTip(tooltip)
-
-        if checkable:
-            button.setCheckable(True)
-            button.toggled.connect(callback)
-        else:
-            button.clicked.connect(lambda: callback())
-
+        # Add button to toolbar
         self.toolbar.addWidget(button)
         # Store button in dictionary
         self.buttons[name] = button
+        # Connect button callback
+        self.connect_button_callback(name, callback)
         # Adjust toolbar dimensions after adding the button
         self.update_toolbar_minimum_width()
         self.update_toolbar_height()
 
+    def connect_button_callback(self, name, callback):
+        """Sets or updates the callback for a specific button.
+
+        Parameters:
+        name: str
+            The name of the button.
+        callback: function
+            The new callback function to set.
+        """
+        if name in self.buttons:
+            button = self.buttons[name]
+            checkable = button.isCheckable()
+
+            # Safely disconnect existing connections
+            try:
+                if checkable:
+                    button.toggled.disconnect()
+                else:
+                    button.clicked.disconnect()
+            except TypeError:
+                # No connections to disconnect
+                pass
+
+            # Connect the new callback
+            if callback:
+                if checkable:
+                    button.toggled.connect(callback)
+                else:
+                    button.clicked.connect(lambda: callback())
+
+    
     def update_toolbar_minimum_width(self):
         total_width = 0
         for name, button in self.buttons.items():
