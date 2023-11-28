@@ -1,4 +1,4 @@
-from nap_plot_tools.cmap import get_custom_cat10based_cmap_list
+from nap_plot_tools.cmap import make_cat10_mod_cmap, get_custom_cat10based_cmap_list
 from qtpy.QtCore import Qt, QSize, QRect
 from qtpy.QtGui import QColor, QPainter, QPixmap
 from qtpy.QtWidgets import QSpinBox, QToolButton, QToolBar, QVBoxLayout, QWidget, QHBoxLayout, QSizePolicy
@@ -10,7 +10,7 @@ class QtColorBox(QWidget):
     """
     
 
-    def __init__(self) -> None:
+    def __init__(self, first_color_transparent=True) -> None:
         super().__init__()
         # TODO: Check why this may be necessary
         # self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
@@ -18,10 +18,10 @@ class QtColorBox(QWidget):
         self._height = 24
         self.setFixedWidth(self._height)
         self.setFixedHeight(self._height)
-        # self.setToolTip(('Selected signal class color'))
+        self.cmap = make_cat10_mod_cmap(first_color_transparent=first_color_transparent)
         self._value = 0
-        self.color = None
-        self.cmap = get_custom_cat10based_cmap_list()
+        self.color = np.round(
+                255 * np.asarray(self.cmap(0))).astype(int)
 
     def paintEvent(self, event):
         """Paint the colorbox.  If no color, display a checkerboard pattern.
@@ -32,9 +32,9 @@ class QtColorBox(QWidget):
             Event from the Qt context.
         """
         painter = QPainter(self)
-        # signal_class = self.parent()._signal_class
         if self._value <= 0:
-            self.color = None
+            self.color = np.round(
+                255 * np.asarray(self.cmap(0))).astype(int)
             for i in range(self._height // 4):
                 for j in range(self._height // 4):
                     if (i % 2 == 0 and j % 2 == 0) or (
@@ -48,7 +48,7 @@ class QtColorBox(QWidget):
                     painter.drawRect(i * 4, j * 4, 5, 5)
         else:
             color = np.round(
-                255 * np.asarray(self.cmap[self._value])).astype(int)
+                255 * np.asarray(self.cmap(self._value))).astype(int)
             painter.setPen(QColor(*list(color)))
             painter.setBrush(QColor(*list(color)))
             painter.drawRect(0, 0, self._height, self._height)
@@ -67,11 +67,11 @@ class QtColorSpinBox(QWidget):
 
     Custom widget to select a color and a value.
     """    
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, first_color_transparent=True):
         super().__init__(parent)
         self.layout = QHBoxLayout(self)
         # Colorbox
-        self.colorBox = QtColorBox()
+        self.colorBox = QtColorBox(first_color_transparent=first_color_transparent)
         # Spinbox
         self.spinBox = QSpinBox()
         self.spinBox.setMinimum(0)
