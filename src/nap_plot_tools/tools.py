@@ -8,8 +8,6 @@ import numpy as np
 class QtColorBox(QWidget):
     """A widget that shows a square with the current signal class color.
     """
-    
-
     def __init__(self, first_color_transparent=True) -> None:
         super().__init__()
         # TODO: Check why this may be necessary
@@ -365,3 +363,56 @@ class CustomToolbarWidget(QWidget):
         # Set the checked state of the button
         if name in self.buttons and self.buttons[name].isCheckable():
             self.buttons[name].setChecked(state)
+
+    def disconnect_button_callback(self, name, callback=None):
+        """Disconnect a specific callback for a button, or all callbacks if none is specified.
+
+        Parameters
+        ----------
+        name : str
+            The name of the button whose callback should be disconnected.
+        callback : callable, optional
+            The specific callback function to disconnect. If None, all callbacks are disconnected.
+        """
+        if name in self.buttons:
+            button = self.buttons[name]
+            signal = button.toggled if button.isCheckable() else button.clicked
+            
+            if callback is not None:
+                # Disconnect a specific callback
+                try:
+                    signal.disconnect(callback)
+                except TypeError:
+                    # Callback was not connected
+                    pass
+            else:
+                # Disconnect all callbacks for the signal
+                try:
+                    signal.disconnect()
+                except TypeError:
+                    # No connections to disconnect
+                    pass
+
+    def remove_button(self, name):
+        """Remove a custom button from the toolbar, disconnecting any callbacks.
+
+        Parameters
+        ----------
+        name : str
+            The name of the button to remove.
+        """
+        # Check if the button exists
+        if name in self.buttons:
+            # Remove all connections
+            self.disconnect_button_callback(name)
+
+            button = self.buttons[name]
+            # Remove the button widget from the toolbar
+            self.toolbar.removeWidget(button)
+            # Delete the button from the dictionary
+            del self.buttons[name]
+
+            # Adjust toolbar dimensions after removing the button
+            self.update_toolbar_minimum_width()
+            self.update_toolbar_height()
+
