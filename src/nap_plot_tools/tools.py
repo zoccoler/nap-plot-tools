@@ -401,14 +401,22 @@ class CustomToolbarWidget(QWidget):
         name : str
             The name of the button to remove.
         """
-        # Check if the button exists
         if name in self.buttons:
-            # Remove all connections
+            # Disconnect all callbacks for the button
             self.disconnect_button_callback(name)
 
             button = self.buttons[name]
-            # Remove the button widget from the toolbar
-            self.toolbar.removeWidget(button)
+            # Find the corresponding action and remove it from the toolbar
+            action = self.toolbar.widgetForAction(button.defaultAction())
+            if action:
+                self.toolbar.removeAction(button.defaultAction())
+            
+            # Hide the button as an additional precaution.
+            button.setVisible(False)
+
+            # Delete the button
+            button.deleteLater()
+
             # Delete the button from the dictionary
             del self.buttons[name]
 
