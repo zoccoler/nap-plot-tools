@@ -1,5 +1,5 @@
 from nap_plot_tools.cmap import make_cat10_mod_cmap, get_custom_cat10based_cmap_list
-from qtpy.QtCore import Qt, QSize, QRect
+from qtpy.QtCore import Qt, QSize, QRect, Signal
 from qtpy.QtGui import QColor, QPainter, QPixmap
 from qtpy.QtWidgets import QSpinBox, QToolButton, QToolBar, QVBoxLayout, QWidget, QHBoxLayout, QSizePolicy
 
@@ -64,7 +64,10 @@ class QtColorSpinBox(QWidget):
     """QtColorSpinBox class.
 
     Custom widget to select a color and a value.
-    """    
+    """
+    # Signal emitted when the spinbox value changes
+    color_spinbox_value_changed_signal = Signal(int)
+
     def __init__(self, parent=None, first_color_transparent=True):
         super().__init__(parent)
         self.layout = QHBoxLayout(self)
@@ -81,6 +84,9 @@ class QtColorSpinBox(QWidget):
 
         # Connect spinbox to color
         self.spinBox.valueChanged.connect(self.colorBox.setValue)
+
+        # Connect spinbox to signal
+        self.spinBox.valueChanged.connect(self.spinboxValueChangedEmitter)
 
     @property
     def value(self):
@@ -145,6 +151,10 @@ class QtColorSpinBox(QWidget):
 
     def setSingleStep(self, value):
         self.spinBox.setSingleStep(value)
+
+    def spinboxValueChangedEmitter(self):
+        """Emit the color_spinbox_value_changed signal when the spinbox value changes."""
+        self.color_spinbox_value_changed_signal.emit(self.value)
 
 class CustomToolButton(QToolButton):
     """CustomToolButton class.
