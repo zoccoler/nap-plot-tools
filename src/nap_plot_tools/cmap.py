@@ -317,3 +317,6 @@ def get_cat10_mod_hex_colors():
     ]
 
     return colors_hex
+
+cat10_mod_cmap = make_cat10_mod_cmap()
+cat10_mod_cmap_first_opaque = make_cat10_mod_cmap(first_color_transparent=False)
