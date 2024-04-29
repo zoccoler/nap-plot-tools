@@ -1,12 +1,12 @@
 from deprecated import deprecated
 
-def make_cat10_mod_cmap(first_color_transparent=True):
+def make_cat10_mod_cmap(first_color_transparent=False):
     """Make a modified version of the cat10 colormap.
 
     Parameters
     ----------
     first_color_transparent : bool, optional
-        Whether to make the first color transparent. The default is True.
+        Whether to make the first color transparent. The default is False.
 
     Returns
     -------
@@ -15,7 +15,7 @@ def make_cat10_mod_cmap(first_color_transparent=True):
     """
     return make_cmap_from_list(get_cat10_mod_hex_colors(), first_color_transparent)
 
-def make_cmap_from_list(colors, first_transparent=True):
+def make_cmap_from_list(colors, first_transparent=False):
     """Make a matplotlib colormap from a list of colors.
 
     Parameters
@@ -23,7 +23,7 @@ def make_cmap_from_list(colors, first_transparent=True):
     colors : list
         List of colors in hex or rgb format.
     first_transparent : bool, optional
-        Whether to make the first color transparent. The default is True.
+        Whether to make the first color transparent. The default is False.
 
     Returns
     -------
@@ -31,12 +31,14 @@ def make_cmap_from_list(colors, first_transparent=True):
         Matplotlib colormap.
     """    
     from cmap import Colormap, Color
+    name = 'cat10_modified'
     if first_transparent:
         first_color_as_list = list(Color(colors[0]))
         # Set transparency to 0
         first_color_as_list[-1] = 0
         colors[0] = tuple(first_color_as_list)
-    return Colormap(colors).to_mpl()
+        name = name + '_first_transparent'
+    return Colormap(value=colors, name=name).to_mpl()
 
 @deprecated("get_custom_cat10based_cmap_list() is deprecated. Use make_cat10_mod_cmap() instead (turn into list if needed).")
 def get_custom_cat10based_cmap_list():
@@ -318,5 +320,5 @@ def get_cat10_mod_hex_colors():
 
     return colors_hex
 
-cat10_mod_cmap = make_cat10_mod_cmap()
-cat10_mod_cmap_first_opaque = make_cat10_mod_cmap(first_color_transparent=False)
+cat10_mod_cmap = make_cat10_mod_cmap() # Default is first color opaque
+cat10_mod_cmap_first_transparent = make_cat10_mod_cmap(first_color_transparent=True)
