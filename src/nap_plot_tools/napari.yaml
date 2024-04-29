@@ -1,0 +1,7 @@
+name: nap-plot-tools
+display_name: 
+# use 'hidden' to remove plugin from napari hub search results, use public otherwise
+visibility: hidden
+# see https://napari.org/stable/plugins/manifest.html for valid categories
+categories: [Utilities]
+
