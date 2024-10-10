@@ -211,6 +211,20 @@ class CustomToolButton(QToolButton):
         self.setFixedSize(self._icon_size.width() + self._additional_icon_size, self._icon_size.height() + self._additional_icon_size)
         self.update()
 
+    def update_icon_path(self, default_icon_path, checked_icon_path=None):
+        """Update the default and checked icon paths.
+
+        Parameters
+        ----------
+        default_icon_path : str
+            Path to the default icon.
+        checked_icon_path : str, optional
+            Path to the icon when the button is checked. If None, the default icon is used.
+        """        
+        self._default_icon_path = default_icon_path
+        self._checked_icon_path = checked_icon_path or default_icon_path
+        self.update()
+
     def paintEvent(self, event):
         """Override paintEvent to draw the button's icon with the desired size.
 
